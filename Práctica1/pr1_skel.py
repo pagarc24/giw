@@ -1,10 +1,8 @@
 """
-TODO: rellenar
-
 Asignatura: GIW
 Práctica 1
-Grupo: XXXXXXX
-Autores: XXXXXX
+Grupo: 07
+Autores: NICOLÁS JUAN FAJARDO CARRASCO, PABLO GARCÍA FERNÁNDEZ, MANUEL LOURO MENESES, ROBERTO MORENO GUILLÉN
 
 Declaramos que esta solución es fruto exclusivamente de nuestro trabajo personal. No hemos
 sido ayudados por ninguna otra persona o sistema automático ni hemos obtenido la solución
