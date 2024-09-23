@@ -106,4 +106,21 @@ def grado_entrada(grafo, nodo):
 
 
 def distancia(grafo, nodo):
-    ...
+    #Comporbamos que el grafo sea válido y que el nodo pertenezca a este
+    if not validar(grafo) or nodo not in grafo["nodos"]:
+        return None
+    
+    #Inicializamos el diccionario de distancias (Todos a -1 excepto el de inicio)
+    distancias = {n: -1 for n in grafo["nodos"]}
+    distancias[nodo] = 0
+    
+    #Cola para recorrer el grafo nodo por nodo
+    cola = [nodo]
+    
+    while cola:
+        actual = cola.pop(0) #Quita primer nodo de la cola
+        for vecino in grafo["aristas"].get(actual, []): #Itera sobre los nodos vecinos
+            if distancias[vecino] == -1: #Comprueba si lo ha visitado y opera en base a ello
+                distancias[vecino] = distancias[actual] + 1 
+                cola.append(vecino) 
+    return distancias
