@@ -47,16 +47,38 @@ def es_cuadrada(matriz):
 
 
 def es_simetrica(matriz):
-    ...
+    # Es simétrica si es igual a su traspuesta
+    """Devuelve si la matriz es simética o no"""
+    if es_cuadrada(matriz):
+        n= len(matriz)
+        for i in range(n):
+            for j in range(n):
+                if matriz[i][j]!=matriz[j][i]:
+                    return False
+        return True
+    else:
+        return False
 
 
 def multiplica_escalar(matriz, k):
-    ...
+   for i in range(len(matriz)):
+        for j in range(len(matriz[0])):
+            matriz[i][j]*=k
+   return matriz
+   
+
 
 
 def suma(matriz1, matriz2):
-    ...
-
+    # Las matrices tienen que tener el mismo numero de filas entre ellas y el mismo numero de columnas
+    if len(matriz1)==len(matriz2) and len(matriz1[0])==len(matriz2[0]):
+        mat3=[]
+        for i in range(len(matriz1)):
+            nfil=[]
+            for j in range(len(matriz2)):
+                nfil.append(matriz1[i][j]+matriz2[i][j])
+            mat3.append(nfil)
+            
 
 # Ejercicio 2
 def validar(grafo):
