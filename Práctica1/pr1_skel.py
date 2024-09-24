@@ -78,6 +78,7 @@ def suma(matriz1, matriz2):
             for j in range(len(matriz2)):
                 nfil.append(matriz1[i][j]+matriz2[i][j])
             mat3.append(nfil)
+    return mat3
             
 
 # Ejercicio 2
