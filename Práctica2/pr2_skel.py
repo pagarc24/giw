@@ -24,10 +24,12 @@ from pprint import pprint
 
 def lee_fichero_accidentes(ruta):
     """Muestra una lista de diccionarios"""
+
     with open(ruta, 'r', newline='', encoding='utf8') as fich:
         diccionario = csv.DictReader(fich, delimiter=';')
         lista = list(diccionario)
-        pprint(lista)
+
+    return lista
 
 
 def accidentes_por_distrito_tipo(datos):
