@@ -23,7 +23,7 @@ import csv
 from pprint import pprint
 
 def lee_fichero_accidentes(ruta):
-    """Muestra una lista de diccionarios"""
+    """Devuelve los datos del archivo en una lista de diccionarios"""
 
     with open(ruta, 'r', newline='', encoding='utf8') as fich:
         diccionario = csv.DictReader(fich, delimiter=';')
