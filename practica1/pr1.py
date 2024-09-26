@@ -118,8 +118,9 @@ def grado_entrada(grafo, nodo):
 
     if validar(grafo) and (nodo in grafo["nodos"]):
         grade = 0
-        for lista in grafo["aristas"]:
-            grade = grade + 1 if nodo in lista else grade
+        for lista in grafo["aristas"].values():
+            if nodo in lista:
+                grade = grade + 1
 
     return grade
 
