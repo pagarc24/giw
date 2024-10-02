@@ -33,10 +33,40 @@ def lee_fichero_accidentes(ruta):
 
 
 def accidentes_por_distrito_tipo(datos):
-    ...
+    """Crea un diccionario por distrito y tipo de accidente indicando cuantos acccidentes hubo"""
+    
+    resultado = {}
+    
+    for accidente in datos:
+        distrito = accidente['distrito']
+        tipo_accidente = accidente['tipo_accidente']
+        clave = (distrito, tipo_accidente)
+        
+        if clave in resultado:
+            resultado[clave] += 1
+        else:
+            resultado[clave] = 1
+            
+    return resultado
 
 def dias_mas_accidentes(datos):
-    ...
+    """Devuelve las fechas con más accidentes, devolviendo (día, numero accidentes)"""
+
+    accidentes_al_dia = {}
+    
+    for accidente in datos:
+        fecha = accidente['fecha']
+        
+        if fecha in accidentes_al_dia:
+            accidentes_al_dia[fecha] += 1
+        else:
+            accidentes_al_dia[fecha] = 1
+    
+    max_accidentes = max(accidentes_al_dia.values())
+    
+    dias_max_accidentes = {(fecha, num_accidentes) for fecha, num_accidentes in accidentes_al_dia.items() if num_accidentes == max_accidentes}
+    
+    return dias_max_accidentes
 
 def puntos_negros_distrito(datos, distrito, k):
     ...
