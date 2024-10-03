@@ -34,42 +34,62 @@ def lee_fichero_accidentes(ruta):
 
 def accidentes_por_distrito_tipo(datos):
     """Crea un diccionario por distrito y tipo de accidente indicando cuantos acccidentes hubo"""
-    
+
     resultado = {}
-    
+
     for accidente in datos:
         distrito = accidente['distrito']
         tipo_accidente = accidente['tipo_accidente']
         clave = (distrito, tipo_accidente)
-        
+
         if clave in resultado:
             resultado[clave] += 1
         else:
             resultado[clave] = 1
-            
+
     return resultado
 
 def dias_mas_accidentes(datos):
     """Devuelve las fechas con más accidentes, devolviendo (día, numero accidentes)"""
 
     accidentes_al_dia = {}
-    
+
     for accidente in datos:
         fecha = accidente['fecha']
-        
+
         if fecha in accidentes_al_dia:
             accidentes_al_dia[fecha] += 1
         else:
             accidentes_al_dia[fecha] = 1
-    
-    max_accidentes = max(accidentes_al_dia.values())
-    
-    dias_max_accidentes = {(fecha, num_accidentes) for fecha, num_accidentes in accidentes_al_dia.items() if num_accidentes == max_accidentes}
-    
-    return dias_max_accidentes
+
+    max_acc = max(accidentes_al_dia.values())
+
+    dias_max_acc = {(fecha, num_acc) for fecha, num_acc in accidentes_al_dia.items() if num_acc == max_acc}
+
+    return dias_max_acc
 
 def puntos_negros_distrito(datos, distrito, k):
-    ...
+    """Genera una lista con el top-k de localizaciones donde más accidentes se han producido"""
+
+    dic_accidentes = {}
+
+    for accidente in datos:
+        if accidente['distrito'] == distrito:
+            localizacion = accidente['localizacion']
+            if localizacion in dic_accidentes:
+                dic_accidentes[localizacion] += 1
+            else:
+                dic_accidentes[localizacion] = 1
+
+    lista_accidentes = list(dic_accidentes.items())
+
+    def criterio(elemento):
+        return (-elemento[1], elemento[0])
+
+    lista_accidentes.sort(key=criterio)
+
+    return lista_accidentes[:k]
+
 
 
 #### Formato JSON
