@@ -16,9 +16,8 @@ deshonesta ninguna otra actividad que pueda mejorar nuestros resultados ni perju
 resultados de los demás.
 """
 
-from xml.dom.minidom import parse
-import xml.dom.minidom
 import html
+from xml.etree import ElementTree
 
 
 def nombres_restaurantes(filename):
@@ -31,48 +30,26 @@ def subcategorias(filename):
 
 def info_restaurante(filename, name):
     """Devuelve un diccionario con la información básica del restaurante"""
-    arb = xml.dom.minidom.parse(filename)
-    lista_servicios = arb.documentElement
-    restaurantes = lista_servicios.getElementsByTagName("service")
+
+    arb = ElementTree.parse(filename)
+    restaurantes = arb.findall("service")
     diccionario = {}
 
     for restaurante in restaurantes:
-        nombre = restaurante.firstChild.childNodes[1].firstChild.data
+        nombre = restaurante[0][1].text
         if nombre == name:
             diccionario['nombre'] = nombre
-            if restaurante.firstChild.childNodes[6].firstChild:
-                desc = restaurante.firstChild.childNodes[6].firstChild.data
-                diccionario['descripcion'] = html.unescape(desc)
-            else:
-                diccionario['descripcion'] = None
+            diccionario['descripcion'] = html.unescape(restaurante[0][6].text)
+            diccionario['email'] = restaurante[0][2].text
+            diccionario['web'] = restaurante[0][7].text
+            diccionario['phone'] = restaurante[0][3].text
+            diccionario['horario'] = html.unescape(restaurante[3][4].text)
 
-            if restaurante.firstChild.childNodes[2].firstChild:
-                email = restaurante.firstChild.childNodes[2].firstChild.data
-                diccionario['email'] = html.unescape(email)
-            else:
-                diccionario['email'] = None
-
-            if restaurante.firstChild.childNodes[7].firstChild:
-                web = restaurante.firstChild.childNodes[7].firstChild.data
-                diccionario['web'] = html.unescape(web)
-            else:
-                diccionario['web'] = None
-
-            if restaurante.firstChild.childNodes[3].firstChild:
-                phone = restaurante.firstChild.childNodes[3].firstChild.data
-                diccionario['phone'] = html.unescape(phone)
-            else:
-                diccionario['phone'] = None
-
-            if restaurante.childNodes[3].childNodes[4].firstChild:
-                horario = restaurante.childNodes[3].childNodes[4].firstChild.data
-                diccionario['horario'] = html.unescape(horario)
-            else:
-                diccionario['horario'] = None
+    if len(diccionario) == 0:
+        return None
 
     return diccionario
 
-#print(info_restaurante("Práctica3\estaurantes_v1_es.xml", "Hasaku Nikkei"))
 
 def busqueda_cercania(filename, lugar, n):
     ...
