@@ -91,6 +91,9 @@ def puntos_negros_distrito(datos, distrito, k):
 
 #### Formato JSON
 import json
+from geopy.geocoders import Nominatim 
+from geopy import distance
+
 
 def leer_monumentos(ruta):
     """Esta función acepta la ruta del fichero JSON y devuelve una lista de monumentos, cada uno representado como un diccionario Python."""
@@ -135,13 +138,55 @@ def codigos_postales(monumentos):
 
     return lista_codigosPostales
     
-"""
+
 def busqueda_palabras_clave(monumentos, palabras):
-    ...
+    """Esta función devuelve un conjunto de parejas (título, distrito) de aquellos monumentos que contienen las palabras clave en su título o en su descripción (campo 'organization-desc'). """
+    resultado = set()
+
+    for monumento in monumentos:
+        titulo=monumento.get('nombre','').lower()
+        descripcion=monumento.get('organization-desc','').lower()
+        titulo_y_descripcion=titulo+''+descripcion
+
+        if all(palabra.lower() in titulo_y_descripcion for palabra in palabras):
+            mon=monumento['nombre']
+            distrito=monumento.get('distrito',{}).get('@id','')
+            resultado.add((mon,distrito))
+    return resultado
+
+
 
 def busqueda_distancia(monumentos, direccion, distancia):
-    ...
-"""
+    
+    geolocator = Nominatim(user_agent="GIW_pr2")
+    location = geolocator.geocode(direccion)
+
+    if location is None:
+        raise ValueError("La dirección no se ha podido encontrar")
+    
+    latitud_dir=location.latitude
+    longitud_dir=location.longitude
+    resultado= list()
+
+    for monumento in monumentos:
+        coordenadas=monumento.get('coordenadas', None)
+        if coordenadas and coordenadas != ("No disponible", "No disponible"):
+            latitud_monumento, longitud_monumento = coordenadas
+            try:
+                latitud_monumento = float(latitud_monumento)
+                longitud_monumento = float(longitud_monumento)
+            except ValueError:
+                continue  
+            
+            dist = distance((latitud_dir, longitud_dir), (latitud_monumento, longitud_monumento)).km
+            
+            if dist <= distancia:
+                resultado.append((monumento['nombre'], monumento['id'], dist))
+    
+    resultado.sort(key=lambda x: x[2]) #Ordenamos por el tercer valor que es la distancia
+    
+    return resultado
+
 
 lista_monumentos = leer_monumentos('300356-0-monumentos-ciudad-madrid.json')
 pprint(codigos_postales(lista_monumentos))
