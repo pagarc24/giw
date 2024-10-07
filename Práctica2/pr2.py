@@ -15,10 +15,7 @@ deshonesta ninguna otra actividad que pueda mejorar nuestros resultados ni perju
 resultados de los demás.
 """
 
-
-
 ### Formato CSV
-
 import csv
 from pprint import pprint
 
@@ -93,14 +90,58 @@ def puntos_negros_distrito(datos, distrito, k):
 
 
 #### Formato JSON
+import json
+
 def leer_monumentos(ruta):
-    ...
+    """Esta función acepta la ruta del fichero JSON y devuelve una lista de monumentos, cada uno representado como un diccionario Python."""
+    with open(ruta, 'r', encoding='utf8') as file:
+        archivo_monumentos = json.load(file)
+    
+    lista_monumentos = []
+
+    for e in archivo_monumentos['@graph']:
+        monumento = {}
+        monumento['nombre'] = e.get('title', "Sin título")
+        monumento['id'] = e.get('id', "unknown")
+
+        address = e['address']
+        monumento['ciudad'] = address.get('locality', "unknown")
+        monumento['ZIP'] = address.get('postal-code', "unknown")
+
+        monumento['URL'] = e.get('url', "Sin URL")
+
+        coordenadas = e.get('location', None)
+        latitud = coordenadas.get('latitude', "No disponible") if coordenadas != None else "No disponible"
+        longitud = coordenadas.get('longitude', "No disponible") if coordenadas != None else "No disponible"
+        monumento['coordenadas'] = (latitud, longitud)
+
+        lista_monumentos.append(monumento)
+
+    return lista_monumentos
+
 
 def codigos_postales(monumentos):
-    ...
+    """Esta función recibe una lista de monumentos y devuelve una lista ordenada de parejas (codigo_postal, numero_de_monumentos)"""
+    dict_codigosPostales = {}
 
+    for e in monumentos:
+        dict_codigosPostales[e['ZIP']] = dict_codigosPostales.get(e['ZIP'], 1) + 1
+
+    lista_codigosPostales = []
+    for codigoPostal in dict_codigosPostales:
+        lista_codigosPostales.append((codigoPostal, dict_codigosPostales[codigoPostal]))
+
+    lista_codigosPostales = sorted(lista_codigosPostales, key=lambda cantidad: cantidad[1], reverse=True)
+
+    return lista_codigosPostales
+    
+"""
 def busqueda_palabras_clave(monumentos, palabras):
     ...
 
 def busqueda_distancia(monumentos, direccion, distancia):
     ...
+"""
+
+lista_monumentos = leer_monumentos('300356-0-monumentos-ciudad-madrid.json')
+pprint(codigos_postales(lista_monumentos))
