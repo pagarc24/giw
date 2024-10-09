@@ -17,7 +17,9 @@ resultados de los demás.
 
 ### Formato CSV
 import csv
-from pprint import pprint
+import json
+from geopy.geocoders import Nominatim
+from geopy import distance
 
 def lee_fichero_accidentes(ruta):
     """Devuelve los datos del archivo en una lista de diccionarios"""
@@ -65,6 +67,8 @@ def dias_mas_accidentes(datos):
 
     return dias_max_acc
 
+
+
 def puntos_negros_distrito(datos, distrito, k):
     """Genera una lista con el top-k de localizaciones donde más accidentes se han producido"""
 
@@ -86,27 +90,22 @@ def puntos_negros_distrito(datos, distrito, k):
     return resultado[:k]
 
 
-
 #### Formato JSON
-import json
-from geopy.geocoders import Nominatim 
-from geopy import distance
-from pprint import pp
 
 def leer_monumentos(ruta):
-    """Esta función acepta la ruta del fichero JSON y devuelve una lista de monumentos, cada uno representado como un diccionario Python."""
+    """Devuelve una lista de monumentos, cada uno representado como un diccionario Python."""
     with open(ruta, 'r', encoding='utf8') as file:
         archivo_monumentos = json.load(file)
-    
+
     lista_monumentos = []
 
-    for e in archivo_monumentos['@graph']:
+    for elem in archivo_monumentos['@graph']:
         monumento = {}
 
-        monumento['id'] = e.get('id', "unknown")
-        monumento['nombre'] = e.get('title', "Sin título")
-        
-        address = e['address']
+        monumento['id'] = elem.get('id', "unknown")
+        monumento['nombre'] = elem.get('title', "Sin título")
+
+        address = elem['address']
         distrito = address.get('district', None)
         distrito = distrito.get('@id', "''") if distrito is not None else "''"
         monumento['distrito'] = distrito
@@ -114,14 +113,14 @@ def leer_monumentos(ruta):
         monumento['ZIP'] = address.get('postal-code', "''")
         monumento['calle'] = address.get('street-address', '')
 
-        desc = e.get('organization', None)
+        desc = elem.get('organization', None)
         desc = desc.get('organization-desc', "''") if desc is not None else "''"
         monumento['desc'] = desc
 
-        coordenadas = e.get('location', None)
-        latitud = coordenadas.get('latitude', "No disponible") if coordenadas is not None else "No disponible"
-        longitud = coordenadas.get('longitude', "No disponible") if coordenadas is not None else "No disponible"
-        monumento['coordenadas'] = (latitud, longitud)
+        coord = elem.get('location', None)
+        lat = coord.get('latitude', "No disponible") if coord is not None else "No disponible"
+        long = coord.get('longitude', "No disponible") if coord is not None else "No disponible"
+        monumento['coordenadas'] = (lat, long)
 
         lista_monumentos.append(monumento)
 
@@ -129,73 +128,65 @@ def leer_monumentos(ruta):
 
 
 def codigos_postales(monumentos):
-    """Esta función recibe una lista de monumentos y devuelve una lista ordenada de parejas (codigo_postal, numero_de_monumentos)"""
-    dict_codigosPostales = {}
+    """Devuelve una lista ordenada de parejas (codigo_postal, numero_de_monumentos)"""
+    dic_cod = {}
 
-    for e in monumentos:
-        codigo = e['ZIP']
-        dict_codigosPostales[codigo] = dict_codigosPostales[codigo] + 1 if codigo in dict_codigosPostales else 1
+    for monumento in monumentos:
+        codigo = monumento['ZIP']
+        dic_cod[codigo] = dic_cod[codigo] + 1 if codigo in dic_cod else 1
 
-    lista_pareja = dict_codigosPostales.items()
+    lista_pareja = dic_cod.items()
     lista_pareja = sorted(lista_pareja, key=lambda x : x[1], reverse = True)
     return lista_pareja
 
-  
 
 def busqueda_palabras_clave(monumentos, palabras):
-    """Esta función devuelve un conjunto de parejas (título, distrito) de aquellos monumentos que contienen las palabras clave en su título o en su descripción (campo 'organization-desc'). """
+    """
+    Devuelve un conjunto de parejas (título, distrito) 
+    de los monumentos que contienen las palabras clave en su título o descripción
+    """
     resultado = set()
 
-    for e in monumentos:
-        campos_a_evaluar = e['nombre'].lower() + ' ' + e['desc'].lower()
+    for monumento in monumentos:
+        campos_a_evaluar = monumento['nombre'].lower() + ' ' + monumento['desc'].lower()
 
         if all(palabra.lower() in campos_a_evaluar for palabra in palabras):
-            resultado.add((e['nombre'], e['distrito']))
-            
+            resultado.add((monumento['nombre'], monumento['distrito']))
+
     return resultado
 
+
+
 def busqueda_distancia(monumentos, direccion, distancia):
-    
+    """
+    Devuelve una lista de ternas (título, id, distancia en kilómetros) de los monumentos 
+    que se encuentran a menos de la distancia indicada
+    """
     geolocator = Nominatim(user_agent="GIW_pr2")
     location = geolocator.geocode(direccion)
 
     if location is None:
         raise ValueError("La dirección no se ha podido encontrar")
-    
+
     latitud_dir=location.latitude
     longitud_dir=location.longitude
-    resultado= list()
+    resultado = []
 
     for monumento in monumentos:
         coordenadas=monumento.get('coordenadas', None)
         if coordenadas!= ("No disponible", "No disponible"):
-            latitud_monumento, longitud_monumento = coordenadas
+            latitud_mon, longitud_mon = coordenadas
             try:
-                latitud_monumento = float(latitud_monumento)
-                longitud_monumento = float(longitud_monumento)
+                latitud_mon = float(latitud_mon)
+                longitud_mon = float(longitud_mon)
             except ValueError:
-                continue  
-            
-            dist = distance.distance((latitud_dir, longitud_dir), (latitud_monumento, longitud_monumento)).km
-            
+                continue
+
+            dist = distance.distance((latitud_dir, longitud_dir), (latitud_mon, longitud_mon)).km
+
             if dist <= distancia:
                 resultado.append((monumento['nombre'], monumento['id'], dist))
-    
+
     resultado.sort(key=lambda x: x[2]) #Ordenamos por el tercer valor que es la distancia
-    
+
     return resultado
-
-ruta = '300356-0-monumentos-ciudad-madrid.json'
-monumentos = leer_monumentos(ruta)
-#pp(monumentos[:5])
-lista_mon_zip = codigos_postales(monumentos)
-##pp(lista_mon_zip)
-palabras_clave = ['escultura', 'agua']
-resultado_busqueda = busqueda_palabras_clave(monumentos, palabras_clave)
-##pp(resultado_busqueda)
-
-direccion = "Profesor José García Santesmases 9, Madrid, España"  # Dirección de referencia
-distancia = 1  # Distancia máxima en km
-resultado_distancia = busqueda_distancia(monumentos, direccion, distancia)
-# Mostrar los monumentos cercanos a la dirección especificada
-pprint(resultado_distancia)
