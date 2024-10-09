@@ -89,8 +89,8 @@ def puntos_negros_distrito(datos, distrito, k):
 
 #### Formato JSON
 import json
-from geopy.geocoders import Nominatim 
-from geopy import distance
+"""from geopy.geocoders import Nominatim 
+from geopy import distance"""
 from pprint import pp
 
 def leer_monumentos(ruta):
@@ -107,7 +107,7 @@ def leer_monumentos(ruta):
 
         address = e['address']
         monumento['ciudad'] = address.get('locality', "unknown")
-        monumento['ZIP'] = address.get('postal-code', "unknown")
+        monumento['ZIP'] = address.get('postal-code', "''")
 
         monumento['URL'] = e.get('url', "Sin URL")
 
@@ -127,14 +127,11 @@ def codigos_postales(monumentos):
 
     for e in monumentos:
         codigo = e['ZIP']
-        if codigo in dict_codigosPostales:
-            dict_codigosPostales[codigo] += 1
-        else:
-            dict_codigosPostales[codigo] = 1
+        dict_codigosPostales[codigo] = dict_codigosPostales[codigo] + 1 if codigo in dict_codigosPostales else 1
 
     lista_pareja = list(dict_codigosPostales.items())
-    lista = sorted(lista_pareja, key=lambda lista_pareja : lista_pareja[1], reverse = True)
-    return lista
+    lista_pareja = sorted(lista_pareja, key=lambda x : x[1], reverse = True)
+    return lista_pareja
 
   
 
@@ -185,3 +182,8 @@ def busqueda_distancia(monumentos, direccion, distancia):
     resultado.sort(key=lambda x: x[2]) #Ordenamos por el tercer valor que es la distancia
     
     return resultado
+
+ruta = '300356-0-monumentos-ciudad-madrid.json'
+monumentos = leer_monumentos(ruta)
+lista_mon_zip = codigos_postales(monumentos)
+pp(lista_mon_zip)
