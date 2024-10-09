@@ -136,7 +136,7 @@ def codigos_postales(monumentos):
         codigo = e['ZIP']
         dict_codigosPostales[codigo] = dict_codigosPostales[codigo] + 1 if codigo in dict_codigosPostales else 1
 
-    lista_pareja = list(dict_codigosPostales.items())
+    lista_pareja = dict_codigosPostales.items()
     lista_pareja = sorted(lista_pareja, key=lambda x : x[1], reverse = True)
     return lista_pareja
 
@@ -146,18 +146,13 @@ def busqueda_palabras_clave(monumentos, palabras):
     """Esta función devuelve un conjunto de parejas (título, distrito) de aquellos monumentos que contienen las palabras clave en su título o en su descripción (campo 'organization-desc'). """
     resultado = set()
 
-    for monumento in monumentos:
-        titulo=monumento.get('nombre','').lower()
-        descripcion=monumento.get('organization-desc','').lower()
-        titulo_y_descripcion=titulo+''+descripcion
+    for e in monumentos:
+        campos_a_evaluar = e['nombre'].lower() + ' ' + e['desc'].lower()
 
-        if all(palabra.lower() in titulo_y_descripcion for palabra in palabras):
-            mon=monumento['nombre']
-            distrito=monumento.get('distrito',{}).get('@id','')
-            resultado.add((mon,distrito))
+        if all(palabra.lower() in campos_a_evaluar for palabra in palabras):
+            resultado.add((e['nombre'], e['distrito']))
+            
     return resultado
-
-
 
 def busqueda_distancia(monumentos, direccion, distancia):
     
@@ -193,4 +188,6 @@ def busqueda_distancia(monumentos, direccion, distancia):
 ruta = '300356-0-monumentos-ciudad-madrid.json'
 monumentos = leer_monumentos(ruta)
 lista_mon_zip = codigos_postales(monumentos)
-pp(lista_mon_zip)
+palabras_clave = ['escultura', 'agua']
+resultado_busqueda = busqueda_palabras_clave(monumentos, palabras_clave)
+pp(resultado_busqueda)
