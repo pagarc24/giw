@@ -49,19 +49,19 @@ def accidentes_por_distrito_tipo(datos):
 def dias_mas_accidentes(datos):
     """Devuelve las fechas con más accidentes, devolviendo (día, numero accidentes)"""
 
-    accidentes_al_dia = {}
+    acc_dia = {}
 
     for accidente in datos:
         fecha = accidente['fecha']
 
-        if fecha in accidentes_al_dia:
-            accidentes_al_dia[fecha] += 1
+        if fecha in acc_dia:
+            acc_dia[fecha] += 1
         else:
-            accidentes_al_dia[fecha] = 1
+            acc_dia[fecha] = 1
 
-    max_acc = max(accidentes_al_dia.values())
+    max_acc = max(acc_dia.values())
 
-    dias_max_acc = {(fecha, num_acc) for fecha, num_acc in accidentes_al_dia.items() if num_acc == max_acc}
+    dias_max_acc = {(fecha, num_acc) for fecha, num_acc in acc_dia.items() if num_acc == max_acc}
 
     return dias_max_acc
 
@@ -78,14 +78,12 @@ def puntos_negros_distrito(datos, distrito, k):
             else:
                 dic_accidentes[localizacion] = 1
 
-    lista_accidentes = list(dic_accidentes.items())
+    lista_acc = list(dic_accidentes.items())
 
-    def criterio(elemento):
-        return (-elemento[1], elemento[0])
+    orden_loc = sorted(lista_acc, key=lambda lista_acc : lista_acc[0], reverse = True)
+    resultado = sorted(orden_loc, key=lambda lista_acc : lista_acc[1], reverse = True)
 
-    lista_accidentes.sort(key=criterio)
-
-    return lista_accidentes[:k]
+    return resultado[:k]
 
 
 
@@ -93,7 +91,7 @@ def puntos_negros_distrito(datos, distrito, k):
 import json
 from geopy.geocoders import Nominatim 
 from geopy import distance
-
+from pprint import pp
 
 def leer_monumentos(ruta):
     """Esta función acepta la ruta del fichero JSON y devuelve una lista de monumentos, cada uno representado como un diccionario Python."""
@@ -114,8 +112,8 @@ def leer_monumentos(ruta):
         monumento['URL'] = e.get('url', "Sin URL")
 
         coordenadas = e.get('location', None)
-        latitud = coordenadas.get('latitude', "No disponible") if coordenadas != None else "No disponible"
-        longitud = coordenadas.get('longitude', "No disponible") if coordenadas != None else "No disponible"
+        latitud = coordenadas.get('latitude', "No disponible") if coordenadas is not None else "No disponible"
+        longitud = coordenadas.get('longitude', "No disponible") if coordenadas is not None else "No disponible"
         monumento['coordenadas'] = (latitud, longitud)
 
         lista_monumentos.append(monumento)
@@ -128,16 +126,17 @@ def codigos_postales(monumentos):
     dict_codigosPostales = {}
 
     for e in monumentos:
-        dict_codigosPostales[e['ZIP']] = dict_codigosPostales.get(e['ZIP'], 1) + 1
+        codigo = e['ZIP']
+        if codigo in dict_codigosPostales:
+            dict_codigosPostales[codigo] += 1
+        else:
+            dict_codigosPostales[codigo] = 1
 
-    lista_codigosPostales = []
-    for codigoPostal in dict_codigosPostales:
-        lista_codigosPostales.append((codigoPostal, dict_codigosPostales[codigoPostal]))
+    lista_pareja = list(dict_codigosPostales.items())
+    lista = sorted(lista_pareja, key=lambda lista_pareja : lista_pareja[1], reverse = True)
+    return lista
 
-    lista_codigosPostales = sorted(lista_codigosPostales, key=lambda cantidad: cantidad[1], reverse=True)
-
-    return lista_codigosPostales
-    
+  
 
 def busqueda_palabras_clave(monumentos, palabras):
     """Esta función devuelve un conjunto de parejas (título, distrito) de aquellos monumentos que contienen las palabras clave en su título o en su descripción (campo 'organization-desc'). """
@@ -186,7 +185,3 @@ def busqueda_distancia(monumentos, direccion, distancia):
     resultado.sort(key=lambda x: x[2]) #Ordenamos por el tercer valor que es la distancia
     
     return resultado
-
-
-lista_monumentos = leer_monumentos('300356-0-monumentos-ciudad-madrid.json')
-pprint(codigos_postales(lista_monumentos))
