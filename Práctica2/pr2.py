@@ -102,14 +102,21 @@ def leer_monumentos(ruta):
 
     for e in archivo_monumentos['@graph']:
         monumento = {}
-        monumento['nombre'] = e.get('title', "Sin título")
-        monumento['id'] = e.get('id', "unknown")
 
+        monumento['id'] = e.get('id', "unknown")
+        monumento['nombre'] = e.get('title', "Sin título")
+        
         address = e['address']
+        distrito = address.get('district', None)
+        distrito = distrito.get('@id', "''") if distrito is not None else "''"
+        monumento['distrito'] = distrito
         monumento['ciudad'] = address.get('locality', "unknown")
         monumento['ZIP'] = address.get('postal-code', "''")
+        monumento['calle'] = address.get('street-address', '')
 
-        monumento['URL'] = e.get('url', "Sin URL")
+        desc = e.get('organization', None)
+        desc = desc.get('organization', "''") if desc is not None else "''"
+        monumento['desc'] = desc
 
         coordenadas = e.get('location', None)
         latitud = coordenadas.get('latitude', "No disponible") if coordenadas is not None else "No disponible"
