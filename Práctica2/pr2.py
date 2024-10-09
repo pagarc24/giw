@@ -89,8 +89,8 @@ def puntos_negros_distrito(datos, distrito, k):
 
 #### Formato JSON
 import json
-"""from geopy.geocoders import Nominatim 
-from geopy import distance"""
+from geopy.geocoders import Nominatim 
+from geopy import distance
 from pprint import pp
 
 def leer_monumentos(ruta):
@@ -115,7 +115,7 @@ def leer_monumentos(ruta):
         monumento['calle'] = address.get('street-address', '')
 
         desc = e.get('organization', None)
-        desc = desc.get('organization', "''") if desc is not None else "''"
+        desc = desc.get('organization-desc', "''") if desc is not None else "''"
         monumento['desc'] = desc
 
         coordenadas = e.get('location', None)
@@ -176,7 +176,7 @@ def busqueda_distancia(monumentos, direccion, distancia):
             except ValueError:
                 continue  
             
-            dist = distance((latitud_dir, longitud_dir), (latitud_monumento, longitud_monumento)).km
+            dist = distance.distance((latitud_dir, longitud_dir), (latitud_monumento, longitud_monumento)).km
             
             if dist <= distancia:
                 resultado.append((monumento['nombre'], monumento['id'], dist))
@@ -187,7 +187,15 @@ def busqueda_distancia(monumentos, direccion, distancia):
 
 ruta = '300356-0-monumentos-ciudad-madrid.json'
 monumentos = leer_monumentos(ruta)
+#pp(monumentos[:5])
 lista_mon_zip = codigos_postales(monumentos)
+##pp(lista_mon_zip)
 palabras_clave = ['escultura', 'agua']
 resultado_busqueda = busqueda_palabras_clave(monumentos, palabras_clave)
-pp(resultado_busqueda)
+##pp(resultado_busqueda)
+
+direccion = "Profesor José García Santesmases 9, Madrid, España"  # Dirección de referencia
+distancia = 1  # Distancia máxima en km
+resultado_distancia = busqueda_distancia(monumentos, direccion, distancia)
+# Mostrar los monumentos cercanos a la dirección especificada
+pprint(resultado_distancia)
