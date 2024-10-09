@@ -168,7 +168,7 @@ def busqueda_distancia(monumentos, direccion, distancia):
 
     for monumento in monumentos:
         coordenadas=monumento.get('coordenadas', None)
-        if coordenadas and coordenadas != ("No disponible", "No disponible"):
+        if coordenadas!= ("No disponible", "No disponible"):
             latitud_monumento, longitud_monumento = coordenadas
             try:
                 latitud_monumento = float(latitud_monumento)
