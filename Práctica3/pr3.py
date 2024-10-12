@@ -19,6 +19,11 @@ resultados de los demás.
 import html
 from xml.etree import ElementTree
 
+from geopy.geocoders import Nominatim
+from geopy import distance
+
+
+
 
 def nombres_restaurantes(filename):
     ...
@@ -51,5 +56,45 @@ def info_restaurante(filename, name):
     return diccionario
 
 
+
+
 def busqueda_cercania(filename, lugar, n):
-    ...
+
+    geolocator = Nominatim(user_agent="GIW_pr3")
+    location = geolocator.geocode(lugar)
+
+
+    if location is None:
+        raise ValueError("La dirección no se ha podido encontrar")
+    
+    latitud_dir=location.latitude
+    longitud_dir=location.longitude
+    
+    arb = ElementTree.parse(filename)
+    restaurantes = arb.findall("service")
+    resultados = []
+    
+    for restaurante in restaurantes:
+        nombre_elem = restaurante.find("basicData/name")
+        nombre = html.unescape(nombre_elem.text.strip()) if nombre_elem is not None else None
+        
+        latitud_elem = restaurante.find("geoData/latitude")
+        longitud_elem = restaurante.find("geoData/longitude")
+        
+        if nombre and latitud_elem is not None and longitud_elem is not None:
+            try:
+                latitud_rest = float(latitud_elem.text)
+                longitud_rest = float(longitud_elem.text)
+            except ValueError:
+                continue
+
+            dist = distance.distance((latitud_dir, longitud_dir), (latitud_rest, longitud_rest)).km
+
+            if dist <= n:
+                resultados.append((dist, nombre))
+    
+    resultados.sort(key=lambda x: x[0])
+    
+    return resultados
+
+
