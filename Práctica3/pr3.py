@@ -16,26 +16,53 @@ deshonesta ninguna otra actividad que pueda mejorar nuestros resultados ni perju
 resultados de los demás.
 """
 
+import xml.sax
+
 import html
 from xml.etree import ElementTree
 
-from geopy.geocoders import Nominatim
-from geopy import distance
+#from geopy.geocoders import Nominatim
+#from geopy import distance
 
+# Clase Handler dentro del mismo archivo
+class NombresRestaurantesHandler(xml.sax.ContentHandler):
+    def __init__(self):
+        self.nombres = []
+        self.current_name = ""
+        self.in_name_tag = False
 
+    def startElement(self, tag, attributes):
+        if tag == "name":
+            self.in_name_tag = True
+            self.current_name = ""
 
+    def endElement(self, tag):
+        if tag == "name" and self.in_name_tag:
+            nombre = html.unescape(self.current_name.strip())
+            self.nombres.append(nombre)
+            self.in_name_tag = False
+
+    def characters(self, content):
+        if self.in_name_tag:
+            self.current_name += content
 
 def nombres_restaurantes(filename):
-    ...
+    """Devuelve una lista ordenada alfabéticamente con los nombres de todos los restaurantes"""
+    parser = xml.sax.make_parser()
+    handler = NombresRestaurantesHandler()
+    parser.setContentHandler(handler)
 
+    with open(filename, 'r', encoding='utf-8') as file:
+        parser.parse(file)
+
+    return sorted(handler.nombres)
 
 def subcategorias(filename):
     ...
 
 
 def info_restaurante(filename, name):
-    """Devuelve un diccionario con la información básica del restaurante"""
-
+    """devuelve un diccionario Python con la información básica del restaurante"""
     arb = ElementTree.parse(filename)
     restaurantes = arb.findall("service")
     diccionario = {}
@@ -59,7 +86,8 @@ def info_restaurante(filename, name):
 
 
 def busqueda_cercania(filename, lugar, n):
-
+    """Devuelve una lista de parejas (distancia, nombre_restaurante)
+    con aquellos restaurantes que están como mucho a nkilómetros de distancia del lugar indicado"""
     geolocator = Nominatim(user_agent="GIW_pr3")
     location = geolocator.geocode(lugar)
 
