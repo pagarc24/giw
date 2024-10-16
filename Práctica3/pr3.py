@@ -24,7 +24,6 @@ from xml.etree import ElementTree
 #from geopy.geocoders import Nominatim
 #from geopy import distance
 
-# Clase Handler dentro del mismo archivo
 class NombresRestaurantesHandler(xml.sax.ContentHandler):
     def __init__(self):
         self.nombres = []
@@ -56,8 +55,16 @@ class SubcategoriasRestaurantesHandler(xml.sax.ContentHandler):
         self.in_subcategoria_tag = False
         self.subcategoria_name = ""
 
-    def startElement(self, tag, attributes):
-        if tag == "subcategoria":
+        self.start_reading_categoria = False
+        self.start_reading_subcategoria = False
+
+    def startElement(self, tag, att):
+        if tag == "item":
+            if self.in_subcategoria_tag and att.get("name") == "SubCategoria":
+                self.start_reading_subcategoria = True
+            elif self.in_categoria_tag and att.get("name") == "Categoria":
+                self.start_reading_categoria = True
+        elif tag == "subcategoria":
             self.subcategoria_name = ""
             self.in_subcategoria_tag = True
 
@@ -67,10 +74,15 @@ class SubcategoriasRestaurantesHandler(xml.sax.ContentHandler):
             self.in_categoria_tag = True
 
     def endElement(self, tag):
-            if tag == "subcategoria" and self.in_subcategoria_tag:
+            if tag == "item":
+                if self.in_subcategoria_tag:
+                    self.start_reading_subcategoria = False
+                elif self.in_categoria_tag:
+                    self.start_reading_categoria = False
+            elif tag == "subcategoria" and self.in_subcategoria_tag:
                 self.subcategoria_name = html.unescape(self.subcategoria_name.strip())
                 
-                elem = self.categoria_name + " > " +self.subcategoria_name
+                elem = self.categoria_name + " > " + self.subcategoria_name
                 self.cjto_subcategorias.add(elem)
 
                 self.in_subcategoria_tag = False
@@ -80,9 +92,9 @@ class SubcategoriasRestaurantesHandler(xml.sax.ContentHandler):
                 self.categoria_name = ""
 
     def characters(self, content):
-        if self.in_subcategoria_tag:
+        if self.in_subcategoria_tag and self.start_reading_subcategoria:
             self.subcategoria_name += content
-        elif self.in_categoria_tag:
+        elif self.in_categoria_tag and self.start_reading_categoria:
             self.categoria_name += content
         
 
@@ -130,9 +142,6 @@ def info_restaurante(filename, name):
 
     return diccionario
 
-
-
-
 def busqueda_cercania(filename, lugar, n):
     """Devuelve una lista de parejas (distancia, nombre_restaurante)
     con aquellos restaurantes que están como mucho a nkilómetros de distancia del lugar indicado"""
@@ -174,4 +183,5 @@ def busqueda_cercania(filename, lugar, n):
     return resultados
 
 archivo = "restaurantes_v1_es.xml"
-print(subcategorias(archivo))
+cjto_subcategorias = subcategorias(archivo)
+print(cjto_subcategorias)
