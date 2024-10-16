@@ -46,6 +46,46 @@ class NombresRestaurantesHandler(xml.sax.ContentHandler):
         if self.in_name_tag:
             self.current_name += content
 
+class SubcategoriasRestaurantesHandler(xml.sax.ContentHandler):
+    def __init__(self):
+        self.cjto_subcategorias = set()
+        
+        self.in_categoria_tag = False
+        self.categoria_name = ""
+
+        self.in_subcategoria_tag = False
+        self.subcategoria_name = ""
+
+    def startElement(self, tag, attributes):
+        if tag == "subcategoria":
+            self.subcategoria_name = ""
+            self.in_subcategoria_tag = True
+
+            self.categoria_name = html.unescape(self.categoria_name.strip())
+        elif tag == "categoria":
+            self.categoria_name = ""
+            self.in_categoria_tag = True
+
+    def endElement(self, tag):
+            if tag == "subcategoria" and self.in_subcategoria_tag:
+                self.subcategoria_name = html.unescape(self.subcategoria_name.strip())
+                
+                elem = self.categoria_name + " > " +self.subcategoria_name
+                self.cjto_subcategorias.add(elem)
+
+                self.in_subcategoria_tag = False
+                self.subcategoria_name = ""
+            elif tag == "categoria" and self.in_categoria_tag:
+                self.in_categoria_tag = False
+                self.categoria_name = ""
+
+    def characters(self, content):
+        if self.in_subcategoria_tag:
+            self.subcategoria_name += content
+        elif self.in_categoria_tag:
+            self.categoria_name += content
+        
+
 def nombres_restaurantes(filename):
     """Devuelve una lista ordenada alfabéticamente con los nombres de todos los restaurantes"""
     parser = xml.sax.make_parser()
@@ -58,7 +98,15 @@ def nombres_restaurantes(filename):
     return sorted(handler.nombres)
 
 def subcategorias(filename):
-    ...
+    """Esta función devuelve un conjunto de todas las subcategorías que existen en el fichero de restaurantes"""
+    parser = xml.sax.make_parser()
+    handler = SubcategoriasRestaurantesHandler()
+    parser.setContentHandler(handler)
+
+    with open(filename, 'r', encoding='utf-8') as file:
+        parser.parse(file)
+
+    return handler.cjto_subcategorias
 
 
 def info_restaurante(filename, name):
@@ -125,4 +173,5 @@ def busqueda_cercania(filename, lugar, n):
     
     return resultados
 
-
+archivo = "restaurantes_v1_es.xml"
+print(subcategorias(archivo))
