@@ -91,9 +91,26 @@ def consulta2(db_filename):
 
 
 def consulta3(db_filename, limite):
-    ...
+    # Conectamios a la bd
+    conn = sqlite3.connect(db_filename)
+    cur = conn.cursor()
+
+    #Consulta
+    cur.execute('''
+    SELECT datosGen.ticker, datosGen.nombre, AVG(semanales.precio) AS promedio, 
+           MAX(semanales.precio) - MIN(semanales.precio) AS diferencia
+    FROM semanales_IBEX35 semanales
+    JOIN datos_generales datosGen ON semanales.ticker = datosGen.ticker
+    GROUP BY datosGen.ticker, datosGen.nombre
+    HAVING promedio > ?
+    ORDER BY promedio DESC
+    ''', (limite,))
+
+
+    res=cur.fetchall()
+    conn.close()
+    return res
 
 
 def consulta4(db_filename, ticker):
     ...
-
