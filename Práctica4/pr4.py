@@ -19,6 +19,7 @@ import sqlite3
 import csv
 from datetime import datetime
 
+
 def crear_bd(db_name):
     """Crea la base de datos con las tablas necesarias"""
     # Conectamos o creamos la bd
@@ -82,11 +83,38 @@ def cargar_bd(db_name, tab_datos, tab_ibex35):
 
 
 def consulta1(db_filename, indice):
-    ...
+    """devuelve una lista de tuplas (ticker, nombre) de todas las acciones 
+       que componen el indice pasado como parámetro"""
+    conn = sqlite3.connect(db_filename)
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT ticker, nombre FROM datos_generales
+        WHERE indice = ?
+        ORDER BY ticker ASC
+    ''', (indice,))
+    resultados = cursor.fetchall()
+    conn.close()
+    return resultados
+
 
 
 def consulta2(db_filename):
-    ...
+    """devuelve una lista de tuplas (ticker, nombre, precio máximo) de las distintas 
+       acciones del IBEX35 según los datos históricos"""
+    conn = sqlite3.connect(db_filename)
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT dg.ticker, dg.nombre, MAX(se.precio)
+        FROM datos_generales dg
+        JOIN semanales_IBEX35 se ON dg.ticker = se.ticker
+        WHERE dg.indice = 'IBEX 35'
+        GROUP BY dg.ticker, dg.nombre
+        ORDER BY dg.nombre ASC
+    ''')
+
+    resultados = cursor.fetchall()
+    conn.close()
+    return resultados
 
 
 def consulta3(db_filename, limite):
