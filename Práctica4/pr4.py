@@ -1,6 +1,4 @@
 """
-TODO: rellenar
-
 Asignatura: GIW
 Práctica 4
 Grupo: 07
@@ -16,7 +14,6 @@ de manera directa o indirecta. Declaramos además que no hemos realizado de mane
 deshonesta ninguna otra actividad que pueda mejorar nuestros resultados ni perjudicar los
 resultados de los demás.
 """
-
 
 import sqlite3
 import csv
@@ -53,7 +50,7 @@ def crear_bd(db_name):
     conn.close()
 
 def cargar_bd(db_name, tab_datos, tab_ibex35):
-    # Conectamios a la bd
+    # Conectamos a la bd
     conn = sqlite3.connect(db_name)
     cur = conn.cursor()
 
@@ -91,7 +88,7 @@ def consulta2(db_filename):
 
 
 def consulta3(db_filename, limite):
-    # Conectamios a la bd
+    # Conectamos a la bd
     conn = sqlite3.connect(db_filename)
     cur = conn.cursor()
 
@@ -107,10 +104,29 @@ def consulta3(db_filename, limite):
     ''', (limite,))
 
 
-    res=cur.fetchall()
+    res = cur.fetchall()
     conn.close()
     return res
 
 
 def consulta4(db_filename, ticker):
-    ...
+    con = sqlite3.connect(db_filename)
+    cur = con.cursor()
+    query = f'SELECT fecha, precio FROM semanales_IBEX35 WHERE ticker = "{ticker}" ORDER BY fecha DESC'
+    cur.execute(query)
+
+    lista_valores_semanales = []
+    for (fecha, precio) in cur.fetchall():
+        lista_valores_semanales.append((ticker, fecha.split()[0], precio))
+
+    con.close()
+    return lista_valores_semanales
+
+BD = 'bolsa.db'
+crear_bd(BD)
+datos_generales = 'Tabla1.csv'
+datos_semanales = 'Tabla2.csv'
+cargar_bd(BD, datos_generales, datos_semanales)
+ticker = 'ACS'
+solucion4 = consulta4(BD, ticker)
+print(solucion4)
