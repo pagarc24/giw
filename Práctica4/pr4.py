@@ -20,6 +20,7 @@ import csv
 from datetime import datetime
 
 def crear_bd(db_name):
+    """Crea la base de datos con las tablas necesarias"""
     # Conectamos o creamos la bd
     conn = sqlite3.connect(db_name)
     cur = conn.cursor()
@@ -50,6 +51,7 @@ def crear_bd(db_name):
     conn.close()
 
 def cargar_bd(db_name, tab_datos, tab_ibex35):
+    """Carga los datos de los CSV en la base de datos"""
     # Conectamos a la bd
     conn = sqlite3.connect(db_name)
     cur = conn.cursor()
@@ -88,11 +90,10 @@ def consulta2(db_filename):
 
 
 def consulta3(db_filename, limite):
-    # Conectamos a la bd
+    """Devuelve una lista con los datos generales de las empresas cuyo precio promedio sea superior al limite dado"""
     conn = sqlite3.connect(db_filename)
     cur = conn.cursor()
 
-    #Consulta
     cur.execute('''
     SELECT datosGen.ticker, datosGen.nombre, AVG(semanales.precio) AS promedio, 
            MAX(semanales.precio) - MIN(semanales.precio) AS diferencia
@@ -110,6 +111,7 @@ def consulta3(db_filename, limite):
 
 
 def consulta4(db_filename, ticker):
+    """Devuelve una lista con los valores semanales del IBEX35 para el ticker dado"""
     con = sqlite3.connect(db_filename)
     cur = con.cursor()
     query = f'SELECT fecha, precio FROM semanales_IBEX35 WHERE ticker = "{ticker}" ORDER BY fecha DESC'

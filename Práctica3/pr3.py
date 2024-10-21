@@ -122,7 +122,7 @@ def subcategorias(filename):
 
 
 def info_restaurante(filename, name):
-    """devuelve un diccionario Python con la información básica del restaurante"""
+    """Devuelve un diccionario Python con la información básica del restaurante"""
     arb = ElementTree.parse(filename)
     restaurantes = arb.findall("service")
     diccionario = {}
