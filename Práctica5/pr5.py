@@ -1,10 +1,11 @@
 """
-TODO: rellenar
-
 Asignatura: GIW
 Práctica 5
-Grupo: XXXXXXX
-Autores: XXXXXX 
+Grupo: 07
+Autores:    NICOLÁS JUAN FAJARDO CARRASCO
+            PABLO GARCÍA FERNÁNDEZ
+            MANUEL LOURO MENESES
+            ROBERTO MORENO GUILLÉN
 
 Declaramos que esta solución es fruto exclusivamente de nuestro trabajo personal. No hemos
 sido ayudados por ninguna otra persona o sistema automático ni hemos obtenido la solución
@@ -14,6 +15,9 @@ deshonesta ninguna otra actividad que pueda mejorar nuestros resultados ni perju
 resultados de los demás.
 """
 
+from urllib.parse import urljoin
+import requests
+from bs4 import BeautifulSoup
 
 URL = 'https://books.toscrape.com/'
 
@@ -39,8 +43,21 @@ def url_categoria(nombre):
 
 def todas_las_paginas(url):
     """ Sigue la paginación recopilando todas las URL *absolutas* atravesadas """
-    ...
+    paginas = [url]
+    html = requests.get(url, timeout=10).text
+    soup = BeautifulSoup(html, 'html.parser')
+    boton_next = soup.find('li', class_='next')
 
+    while boton_next is not None:
+        next_url = boton_next.find('a')['href']
+        url = urljoin(url, next_url)
+        paginas.append(url)
+
+        html = requests.get(url, timeout=10).text
+        soup = BeautifulSoup(html, 'html.parser')
+        boton_next = soup.find('li', class_='next')
+
+    return paginas
 
 def libros_categoria(nombre):
     """ Dado el nombre de una categoría, devuelve un conjunto de tuplas 
