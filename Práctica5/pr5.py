@@ -15,6 +15,7 @@ deshonesta ninguna otra actividad que pueda mejorar nuestros resultados ni perju
 resultados de los demás.
 """
 
+from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
@@ -25,16 +26,42 @@ URL = 'https://books.toscrape.com/'
 
 # APARTADO 1
 def explora_categoria(url):
-    """ A partir de la URL de la página principal de una categoría, devuelve el nombre
-        de la categoría y el número de libros """
-    ...
+    """A partir de la URL de la página principal de una categoría, devuelve el nombre
+       de la categoría y el número de libros."""
+    response = requests.get(url, timeout=10)
+    if response.status_code != 200:
+        raise ValueError(f"Error al acceder a la URL: {url}")
+    soup = BeautifulSoup(response.text, 'html.parser')
+    nombre_categoria = soup.find('h1').text.strip()
+    resultado_texto = soup.find('form', class_='form-horizontal').find('strong').text
+    try:
+        num_libros = int(resultado_texto.split()[-1])
+    except (ValueError, IndexError):
+        num_libros = 0
 
+    return nombre_categoria, num_libros
 
-def categorias():
-    """ Devuelve un conjunto de parejas (nombre, número libros) de todas las categorías """
-    ...
+def obtener_categorias():
+    """Devuelve un conjunto de parejas (nombre, número libros) de todas las categorías."""
+    response = requests.get(URL, timeout=10)
+    if response.status_code != 200:
+        raise ValueError(f"Error al acceder a la página {URL}")
 
+    soup = BeautifulSoup(response.text, 'html.parser')
+    cat_elementos = soup.find('div', class_='side_categories').find_all('a')
 
+    cat_urls = [
+        (cat.get_text().strip(), URL.rstrip('/') + '/' + cat['href'])
+        for cat in cat_elementos[1:]
+        if "category" in cat['href']
+    ]
+    
+    with ThreadPoolExecutor() as executor:
+        resultados = list(executor.map(lambda cat: explora_categoria(cat[1]), cat_urls))
+
+    conjunto_cat = set(resultados)
+    
+    return sorted(conjunto_cat)
 # APARTADO 2
 def url_categoria(nombre):
     """ Devuelve la URL de la página principal de una categoría a partir de su nombre (ignorar
