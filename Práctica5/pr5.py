@@ -55,18 +55,18 @@ def obtener_categorias():
         for cat in cat_elementos[1:]
         if "category" in cat['href']
     ]
-    
+
     with ThreadPoolExecutor() as executor:
         resultados = list(executor.map(lambda cat: explora_categoria(cat[1]), cat_urls))
 
     conjunto_cat = set(resultados)
-    
+
     return sorted(conjunto_cat)
 # APARTADO 2
 def url_categoria(nombre):
     """ Devuelve la URL de la página principal de una categoría a partir de su nombre (ignorar
         espacios al principio y final y también diferencias en mayúsculas/minúsculas) """
-    
+
     #Convierte el nombre a minúsculas y elimina los espacios al principio y final
     nombre = nombre.lstrip().rstrip().lower()
 
@@ -109,14 +109,14 @@ def libros_categoria(nombre):
     url = url_categoria(nombre)
     if url is None:
         return set()
-    
+
     libros = set()
     paginas = todas_las_paginas(url)
 
     for pagina in paginas:
         response = requests.get(pagina, timeout=10)
         soup = BeautifulSoup(response.content, 'html.parser')
-        
+
         # Extrae la información de cada libro
         libros_pagina = soup.select(".product_pod")
         for libro in libros_pagina:
@@ -124,5 +124,4 @@ def libros_categoria(nombre):
             precio = float(libro.select_one(".price_color").text[1:])
             valoracion = w2n.word_to_num(libro.p["class"][1])
             libros.add((titulo, precio, valoracion))
-    
     return libros
