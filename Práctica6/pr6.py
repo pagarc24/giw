@@ -1,10 +1,11 @@
 """
-TODO: rellenar
-
 Asignatura: GIW
 Práctica 6
-Grupo: XXXXXXX
-Autores: XXXXXX 
+Grupo: 07
+Autores:    NICOLÁS JUAN FAJARDO CARRASCO
+            PABLO GARCÍA FERNÁNDEZ
+            MANUEL LOURO MENESES
+            ROBERTO MORENO GUILLÉN
 
 Declaramos que esta solución es fruto exclusivamente de nuestro trabajo personal. No hemos
 sido ayudados por ninguna otra persona o sistema automático ni hemos obtenido la solución
@@ -14,7 +15,7 @@ deshonesta ninguna otra actividad que pueda mejorar nuestros resultados ni perju
 resultados de los demás.
 """
 
-
+import requests
 
 def inserta_usuarios(datos, token):
     """ Inserta todos los usuarios de la lista y devuelve True si todos han sido insertados correctamente """
@@ -22,16 +23,23 @@ def inserta_usuarios(datos, token):
 
 
 def get_ident_email(email, token):
-    """ Devuelve el identificador del usuario cuyo email sea *exactamente* el pasado como parámetro.
+    """ Devuelve el identificador del usuario cuyo email sea exactamente el pasado como parámetro.
         En caso de que ese usuario no exista devuelve None """
     ...
 
 
 def borra_usuario(email, token):
-    """ Elimina el usuario cuyo email sea *exactamente* el pasado como parámetro. En caso de éxito en el
+    """ Elimina el usuario cuyo email sea exactamente el pasado como parámetro. En caso de éxito en el
         borrado devuelve True. Si no existe tal usuario devolverá False """
-    ...
+    
+    id = get_ident_email(email, token)
 
+    if id is None:
+        return False
+    
+    r = requests.delete(f'https://gorest.co.in/public/v2/users/{id}', headers={'Authorization': f'Bearer {token}'})
+
+    return r.status_code == 204
 
 def inserta_todo(email, token, title, due_on, status='pending'):
     """ Inserta un nuevo ToDo para el usuario con email exactamente igual al pasado. Si el ToDo ha sido insertado
@@ -51,4 +59,7 @@ def lista_todos_no_cumplidos(email, token):
         y hora actual. Para comparar las fechas solo hay que tener en cuenta el dia, la hora y los minutos; es
         decir, ignorar los segundos, microsegundos y el uso horario """
     ...
+
+with open('token_gorest.txt', 'r', encoding='utf8') as f:
+    token = f.read().strip()
 
