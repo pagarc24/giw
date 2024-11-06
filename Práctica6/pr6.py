@@ -19,13 +19,36 @@ import requests
 
 def inserta_usuarios(datos, token):
     """ Inserta todos los usuarios de la lista y devuelve True si todos han sido insertados correctamente """
-    ...
+    usuarios_insertados = 0
+    for usuario in datos:
+        res = requests.post('https://gorest.co.in/public/v2/users',
+                    headers={'Authorization': f'Bearer {token}'},
+                    data=usuario,
+                    timeout=10
+                    )
+        if res.status_code == 201:
+            usuarios_insertados += 1
+    return usuarios_insertados
 
 
 def get_ident_email(email, token):
     """ Devuelve el identificador del usuario cuyo email sea exactamente el pasado como parámetro.
         En caso de que ese usuario no exista devuelve None """
-    ...
+    res = requests.get('https://gorest.co.in/public/v2/users',
+                 params={'email': email},
+                 headers={'Authorization': f'Bearer {token}'},
+                 timeout=10
+                 )
+
+    if res.status_code == 200:
+        usuario = res.json()
+        if usuario:
+            id_usuario = usuario[0]['id']
+            return id_usuario
+        else:
+            return None
+    else:
+        return res.status_code
 
 
 def borra_usuario(email, token):
