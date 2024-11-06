@@ -67,13 +67,41 @@ def borra_usuario(email, token):
 def inserta_todo(email, token, title, due_on, status='pending'):
     """ Inserta un nuevo ToDo para el usuario con email exactamente igual al pasado. Si el ToDo ha sido insertado
         con éxito devolverá True, en otro caso devolverá False """
-    ...
+    user_id = get_ident_email(email, token)
+    if user_id is None:
+        return False
+    
+    todo_data = {
+        'user_id': user_id,
+        'title': title,
+        'due_on': due_on,
+        'status': status
+    }
+    res = requests.post('https://gorest.co.in/public/v2/todos',
+                        headers={'Authorization': f'Bearer {token}'},
+                        data=todo_data,
+                        timeout=10
+                       )
+    
+    return res.status_code == 201
 
 
 def lista_todos(email, token):
     """ Devuelve una lista de diccionarios con todos los ToDo asociados al usuario con el email pasado como
         parámetro """
-    ...
+    user_id = get_ident_email(email, token)
+    if user_id is None:
+        return []
+    
+    res = requests.get(f'https://gorest.co.in/public/v2/users/{user_id}/todos',
+                       headers={'Authorization': f'Bearer {token}'},
+                       timeout=10
+                      )
+    
+    if res.status_code == 200:
+        return res.json()
+    else:
+        return []
 
 
 def lista_todos_no_cumplidos(email, token):
