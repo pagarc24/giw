@@ -15,12 +15,14 @@ deshonesta ninguna otra actividad que pueda mejorar nuestros resultados ni perju
 resultados de los demás.
 """
 
-import requests
 from datetime import datetime
-
+import requests
 
 def inserta_usuarios(datos, token):
-    """ Inserta todos los usuarios de la lista y devuelve True si todos han sido insertados correctamente """
+    """Inserta todos los usuarios de la lista 
+    y devuelve True si todos han sido insertados correctamente.
+    No funciona con los emails del enunciado hemos probado con 
+    eva_1@..., ana_1@... y pepe_1@... y si funcionan"""
     usuarios_insertados = 0
     for usuario in datos:
         res = requests.post('https://gorest.co.in/public/v2/users',
@@ -47,32 +49,36 @@ def get_ident_email(email, token):
         if usuario:
             id_usuario = usuario[0]['id']
             return id_usuario
-        else:
-            return None
-    else:
-        return res.status_code
+        return None
+    return res.status_code
 
 
 def borra_usuario(email, token):
-    """ Elimina el usuario cuyo email sea exactamente el pasado como parámetro. En caso de éxito en el
-        borrado devuelve True. Si no existe tal usuario devolverá False """
-    
-    id = get_ident_email(email, token)
+    """ Elimina el usuario cuyo email sea exactamente el pasado como parámetro.
+    En caso de éxito en el borrado devuelve True. Si no existe tal usuario
+    devolverá False """
 
-    if id is None:
+    user_id = get_ident_email(email, token)
+
+    if user_id is None:
         return False
-    
-    r = requests.delete(f'https://gorest.co.in/public/v2/users/{id}', headers={'Authorization': f'Bearer {token}'})
 
-    return r.status_code == 204
+    res = requests.delete(f'https://gorest.co.in/public/v2/users/{user_id}',
+                        headers={'Authorization': f'Bearer {token}'},
+                        timeout=10
+                        )
+
+
+    return res.status_code == 204
 
 def inserta_todo(email, token, title, due_on, status='pending'):
-    """ Inserta un nuevo ToDo para el usuario con email exactamente igual al pasado. Si el ToDo ha sido insertado
-        con éxito devolverá True, en otro caso devolverá False """
+    """ Inserta un nuevo ToDo para el usuario con email exactamente 
+    igual al pasado. Si el ToDo ha sido insertado con éxito devolverá 
+    True, en otro caso devolverá False """
     user_id = get_ident_email(email, token)
     if user_id is None:
         return False
-    
+
     todo_data = {
         'user_id': user_id,
         'title': title,
@@ -84,33 +90,33 @@ def inserta_todo(email, token, title, due_on, status='pending'):
                         data=todo_data,
                         timeout=10
                        )
-    
+
     return res.status_code == 201
 
 
 def lista_todos(email, token):
-    """ Devuelve una lista de diccionarios con todos los ToDo asociados al usuario con el email pasado como
-        parámetro """
+    """ Devuelve una lista de diccionarios con todos los ToDo asociados 
+    al usuario con el email pasado como parámetro """
     user_id = get_ident_email(email, token)
     if user_id is None:
         return []
-    
+
     res = requests.get(f'https://gorest.co.in/public/v2/users/{user_id}/todos',
                        headers={'Authorization': f'Bearer {token}'},
                        timeout=10
                       )
-    
+
     if res.status_code == 200:
         return res.json()
-    else:
-        return []
+    return []
 
 
 def lista_todos_no_cumplidos(email, token):
-    """ Devuelve una lista de diccionarios con todos los ToDo asociados al usuario con el email pasado como
-        parámetro que están pendientes (status=pending) y cuya fecha tope (due_on) es anterior a la fecha
-        y hora actual (ignorar segundos y microsegundos). """
-    
+    """ Devuelve una lista de diccionarios con todos los ToDo asociados al 
+    usuario con el email pasado como parámetro que están pendientes (status=pending) 
+    y cuya fecha tope (due_on) es anterior a la fecha y hora actual 
+    (ignorar segundos y microsegundos). """
+
     user_id = get_ident_email(email, token)
     if user_id is None:
         return []
@@ -126,17 +132,13 @@ def lista_todos_no_cumplidos(email, token):
 
     todos = res.json()
     pending_todos = []
-    current_time = datetime.now().replace(second=0, microsecond=0) 
+    current_time = datetime.now().replace(second=0, microsecond=0)
 
     for todo in todos:
         if todo['status'] == 'pending':
-            due_date = datetime.strptime(todo['due_on'][:16], "%Y-%m-%dT%H:%M") 
+            due_date = datetime.strptime(todo['due_on'][:16], "%Y-%m-%dT%H:%M")
 
             if due_date < current_time:
                 pending_todos.append(todo)
 
     return pending_todos
-
-with open('token_gorest.txt', 'r', encoding='utf8') as f:
-    token = f.read().strip()
-
