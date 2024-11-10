@@ -16,6 +16,8 @@ resultados de los demás.
 """
 
 import requests
+from datetime import datetime
+
 
 def inserta_usuarios(datos, token):
     """ Inserta todos los usuarios de la lista y devuelve True si todos han sido insertados correctamente """
@@ -107,9 +109,33 @@ def lista_todos(email, token):
 def lista_todos_no_cumplidos(email, token):
     """ Devuelve una lista de diccionarios con todos los ToDo asociados al usuario con el email pasado como
         parámetro que están pendientes (status=pending) y cuya fecha tope (due_on) es anterior a la fecha
-        y hora actual. Para comparar las fechas solo hay que tener en cuenta el dia, la hora y los minutos; es
-        decir, ignorar los segundos, microsegundos y el uso horario """
-    ...
+        y hora actual (ignorar segundos y microsegundos). """
+    
+    user_id = get_ident_email(email, token)
+    if user_id is None:
+        return []
+
+    # Solicitud de los ToDos asociados al usuario
+    res = requests.get(f'https://gorest.co.in/public/v2/users/{user_id}/todos',
+                       headers={'Authorization': f'Bearer {token}'},
+                       timeout=10
+                      )
+
+    if res.status_code != 200:
+        return []
+
+    todos = res.json()
+    pending_todos = []
+    current_time = datetime.now().replace(second=0, microsecond=0) 
+
+    for todo in todos:
+        if todo['status'] == 'pending':
+            due_date = datetime.strptime(todo['due_on'][:16], "%Y-%m-%dT%H:%M") 
+
+            if due_date < current_time:
+                pending_todos.append(todo)
+
+    return pending_todos
 
 with open('token_gorest.txt', 'r', encoding='utf8') as f:
     token = f.read().strip()
