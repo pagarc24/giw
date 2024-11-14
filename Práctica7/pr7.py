@@ -16,6 +16,8 @@ resultados de los demás.
 """
 
 from flask import Flask, request, session, render_template, jsonify
+from jsonschema import validate, ValidationError
+
 app = Flask(__name__)
 
 
@@ -27,21 +29,28 @@ app = Flask(__name__)
 asignaturas = {}
 current_id = 0 
 
+# Esquema JSON para validar las asignaturas
+asignatura_schema = {
+    "type": "object",
+    "properties": {
+        "nombre": {"type": "string"},
+        "numero_alumnos": {"type": "integer"},
+        "horario": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "dia": {"type": "string"},
+                    "hora_inicio": {"type": "integer"},
+                    "hora_final": {"type": "integer"}
+                },
+                "required": ["dia", "hora_inicio", "hora_final"]
+            }
+        }
+    },
+    "required": ["nombre", "numero_alumnos", "horario"]
+}
 
-# Valida la estructura de la asignatura
-def validar_asignatura(data):
-    if 'nombre' not in data or not isinstance(data['nombre'], str):
-        return False
-    if 'numero_alumnos' not in data or not isinstance(data['numero_alumnos'], int):
-        return False
-    if 'horario' not in data or not isinstance(data['horario'], list):
-        return False
-    for entrada in data['horario']:
-        if ('dia' not in entrada or not isinstance(entrada['dia'], str) or
-                'hora_inicio' not in entrada or not isinstance(entrada['hora_inicio'], int) or
-                'hora_final' not in entrada or not isinstance(entrada['hora_final'], int)):
-            return False
-    return True
 
 # Post; añade una asignatura nueva
 @app.route('/asignaturas', methods=['POST'])
@@ -49,11 +58,13 @@ def add_asignatura():
     global current_id
     data = request.get_json()
 
-    # valida la estructura de la asignatura
-    if not validar_asignatura(data):
-        return jsonify({"error": "Formato incorrecto"}), 400
+    # Validar estructura de la asignatura usando JSON Schema
+    try:
+        validate(instance=data, schema=asignatura_schema)
+    except ValidationError as e:
+        return jsonify({"error": f"Formato incorrecto: {e.message}"}), 400
 
-    # asigna id y agrega la asignatura
+    # Asignar ID único y agregar la asignatura
     asignatura_id = current_id
     asignaturas[asignatura_id] = {
         "id": asignatura_id,
