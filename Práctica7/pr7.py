@@ -90,6 +90,60 @@ def get_asignaturas():
     asignaturas_urls = [f"/asignaturas/{aid}" for aid in asignaturas.keys()]
     return jsonify({"asignaturas": asignaturas_urls}), 200
 
+# GET, DELETE, PUT, PATCH asignatura específica
+@app.route('/asignaturas/<int:id>', methods=['GET', 'DELETE', 'PUT', 'PATCH'])
+def asignatura(id):
+    if request.method == 'GET':
+        if id in asignaturas:
+            return jsonify(asignaturas[id]), 200
+        else:
+            return '', 404
+
+    elif request.method == 'DELETE':
+        if id in asignaturas:
+            del asignaturas[id]
+            return '', 204
+        else:
+            return '', 404
+
+    elif request.method == 'PUT':
+        data = request.get_json()
+        if id not in asignaturas:
+            return '', 404
+
+        try:
+            validate(instance=data, schema=asignatura_schema)
+        except ValidationError as e:
+            return jsonify({"error": f"Formato incorrecto: {e.message}"}), 400
+
+        asignaturas[id] = {
+            "id": id,
+            "nombre": data["nombre"],
+            "numero_alumnos": data["numero_alumnos"],
+            "horario": data["horario"]
+        }
+        return '', 200
+
+    elif request.method == 'PATCH':
+        if id not in asignaturas:
+            return '', 404
+
+        data = request.get_json()
+        if len(data.keys()) != 1:
+            return '', 400
+
+        clave = list(data.keys())[0]
+        if clave not in ["nombre", "numero_alumnos", "horario"]:
+            return '', 400
+
+        try:
+            validate(instance={clave: data[clave]}, schema={"type": "object", "properties": {clave: asignatura_schema["properties"][clave]}, "required": [clave]})
+        except ValidationError as e:
+            return jsonify({"error": f"Formato incorrecto: {e.message}"}), 400
+
+        asignaturas[id][clave] = data[clave]
+        return '', 200
+
 ### FIN DEL SERVICIO REST ###
 
 
@@ -106,4 +160,3 @@ if __name__ == '__main__':
     app.config['TEMPLATES_FOLDER'] = 'templates'
 
     app.run()
-
