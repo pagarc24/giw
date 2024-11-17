@@ -144,6 +144,17 @@ def asignatura(id):
         asignaturas[id][clave] = data[clave]
         return '', 200
 
+# Ruta para obtener el horario de una asignatura
+@app.route('/asignaturas/<int:id>/horario', methods=['GET'])
+def get_horario_asignatura(id):
+    # Verificamos si la asignatura existe
+    if id not in asignaturas:
+        return '', 404  # Asignatura no encontrada
+
+    # Obtenemos y devolvemos el horario de la asignatura
+    horario = asignaturas[id].get("horario", [])
+    return jsonify({"horario": horario}), 200
+
 ### FIN DEL SERVICIO REST ###
 
 
