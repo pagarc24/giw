@@ -27,7 +27,7 @@ app = Flask(__name__)
 
 # almacenar asignaturas e id asignaturas
 asignaturas = {}
-current_id = 0 
+current_id = 0
 
 # Esquema JSON para validar las asignaturas
 asignatura_schema = {
@@ -48,9 +48,9 @@ asignatura_schema = {
             }
         }
     },
-    "required": ["nombre", "numero_alumnos", "horario"]
+    "required": ["nombre", "numero_alumnos", "horario"],
+    "additionalProperties": False
 }
-
 
 # Post; añade una asignatura nueva
 @app.route('/asignaturas', methods=['POST'])
@@ -87,8 +87,28 @@ def delete_asignaturas():
 @app.route('/asignaturas', methods=['GET'])
 def get_asignaturas():
     # Generar URLs para cada asignatura en la lista
-    asignaturas_urls = [f"/asignaturas/{aid}" for aid in asignaturas.keys()]
-    return jsonify({"asignaturas": asignaturas_urls}), 200
+    min_alumnos = request.args.get('alumnos_gte', default=0, type=int)
+    per_page = request.args.get('per_page', default=None, type=int)
+    page = request.args.get('page', default=None, type=int)
+
+    if per_page is not None and page is not None:
+        if per_page <= 0 or page <= 0:
+            return '', 400
+        
+        start = (page - 1) * per_page
+        end = start + per_page if start + per_page < len(asignaturas) else len(asignaturas)
+
+        asignaturas_urls = [f"/asignaturas/{aid}" for aid in asignaturas.keys() if asignaturas[aid]["numero_alumnos"] >= min_alumnos][start:end]
+        code = 200 if len(asignaturas_urls) == len(asignaturas) else 206
+
+        return jsonify({"asignaturas": asignaturas_urls}), code
+    elif per_page is None and page is None:
+        asignaturas_urls = [f"/asignaturas/{aid}" for aid in asignaturas.keys() if asignaturas[aid]["numero_alumnos"] >= min_alumnos]
+        code = 200 if len(asignaturas_urls) == len(asignaturas) else 206
+
+        return jsonify({"asignaturas": asignaturas_urls}), code
+    else:
+        return '', 400
 
 # GET, DELETE, PUT, PATCH asignatura específica
 @app.route('/asignaturas/<int:id>', methods=['GET', 'DELETE', 'PUT', 'PATCH'])
