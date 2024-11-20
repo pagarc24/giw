@@ -15,7 +15,7 @@ deshonesta ninguna otra actividad que pueda mejorar nuestros resultados ni perju
 resultados de los demás.
 """
 
-from flask import Flask, request, session, render_template, jsonify
+from flask import Flask, request, jsonify
 from jsonschema import validate, ValidationError
 
 app = Flask(__name__)
@@ -27,7 +27,7 @@ app = Flask(__name__)
 
 # almacenar asignaturas e id asignaturas
 asignaturas = {}
-current_id = 0
+current_id = 0 # pylint: disable=C0103
 
 # Esquema JSON para validar las asignaturas
 asignatura_schema = {
@@ -55,14 +55,20 @@ asignatura_schema = {
 # Post; añade una asignatura nueva
 @app.route('/asignaturas', methods=['POST'])
 def add_asignatura():
-    global current_id
+    """Método para añadir una asignatura nueva"""
+
+    global current_id # pylint: disable=C0103, W0603
+    # Desactivamos la regla C0103
+    # ya que la regla del UPPER_CASE es para constantes y current_id no es una constante.
+    # Desactivamos también la relga W0603
+    # ya que necesitamos global para modificar la variable current_id.
     data = request.get_json()
 
     # Validar estructura de la asignatura usando JSON Schema
     try:
         validate(instance=data, schema=asignatura_schema)
-    except ValidationError as e:
-        return jsonify({"error": f"Formato incorrecto: {e.message}"}), 400
+    except ValidationError as validation_error:
+        return jsonify({"error": f"Formato incorrecto: {validation_error.message}"}), 400
 
     # Asignar ID único y agregar la asignatura
     asignatura_id = current_id
@@ -73,19 +79,23 @@ def add_asignatura():
         "horario": data["horario"]
     }
     current_id += 1
-    
-    # Devolver el ID de la nueva asignatura
     return jsonify({"id": asignatura_id}), 201
 
 # DELETE; elimina todas las asignaturas
 @app.route('/asignaturas', methods=['DELETE'])
 def delete_asignaturas():
+    """Método para eliminar todas las asignaturas"""
     asignaturas.clear()
     return '', 204
 
 # GET; devuelve la lista de URLs de todas las asignaturas
 @app.route('/asignaturas', methods=['GET'])
 def get_asignaturas():
+    """
+    Método para obtener la lista de URLs de todas las asignaturas
+    con un número de alumnos mayor o igual al indicado en el parámetro alumnos_gte.
+    También puede darse un resultado paginado
+    """
     # Generar URLs para cada asignatura en la lista
     min_alumnos = request.args.get('alumnos_gte', default=0, type=int)
     per_page = request.args.get('per_page', default=None, type=int)
@@ -94,16 +104,19 @@ def get_asignaturas():
     if per_page is not None and page is not None:
         if per_page <= 0 or page <= 0:
             return '', 400
-        
         start = (page - 1) * per_page
         end = start + per_page if start + per_page < len(asignaturas) else len(asignaturas)
 
-        asignaturas_urls = [f"/asignaturas/{aid}" for aid in asignaturas.keys() if asignaturas[aid]["numero_alumnos"] >= min_alumnos][start:end]
+        asignaturas_urls = [f"/asignaturas/{aid}"
+                            for aid in asignaturas.keys()
+                            if asignaturas[aid]["numero_alumnos"] >= min_alumnos][start:end]
         code = 200 if len(asignaturas_urls) == len(asignaturas) else 206
 
         return jsonify({"asignaturas": asignaturas_urls}), code
     elif per_page is None and page is None:
-        asignaturas_urls = [f"/asignaturas/{aid}" for aid in asignaturas.keys() if asignaturas[aid]["numero_alumnos"] >= min_alumnos]
+        asignaturas_urls = [f"/asignaturas/{aid}"
+                            for aid in asignaturas.keys()
+                            if asignaturas[aid]["numero_alumnos"] >= min_alumnos]
         code = 200 if len(asignaturas_urls) == len(asignaturas) else 206
 
         return jsonify({"asignaturas": asignaturas_urls}), code
@@ -113,6 +126,7 @@ def get_asignaturas():
 # GET, DELETE, PUT, PATCH asignatura específica
 @app.route('/asignaturas/<int:id>', methods=['GET', 'DELETE', 'PUT', 'PATCH'])
 def asignatura(id):
+    """Método para obtener, eliminar, modificar o actualizar una asignatura específica"""
     if request.method == 'GET':
         if id in asignaturas:
             return jsonify(asignaturas[id]), 200
@@ -133,8 +147,8 @@ def asignatura(id):
 
         try:
             validate(instance=data, schema=asignatura_schema)
-        except ValidationError as e:
-            return jsonify({"error": f"Formato incorrecto: {e.message}"}), 400
+        except ValidationError as validation_error:
+            return jsonify({"error": f"Formato incorrecto: {validation_error.message}"}), 400
 
         asignaturas[id] = {
             "id": id,
@@ -157,9 +171,11 @@ def asignatura(id):
             return '', 400
 
         try:
-            validate(instance={clave: data[clave]}, schema={"type": "object", "properties": {clave: asignatura_schema["properties"][clave]}, "required": [clave]})
-        except ValidationError as e:
-            return jsonify({"error": f"Formato incorrecto: {e.message}"}), 400
+            validate(instance={clave: data[clave]},
+                    schema={"type": "object", "properties":
+                    {clave: asignatura_schema["properties"][clave]}, "required": [clave]})
+        except ValidationError as validation_error:
+            return jsonify({"error": f"Formato incorrecto: {validation_error.message}"}), 400
 
         asignaturas[id][clave] = data[clave]
         return '', 200
