@@ -336,6 +336,16 @@ USUARIOS_INCORRECTOS = [
             tarjetas=[TARJETAS_CORRECTAS[0], TARJETAS_CORRECTAS[1]],
             pedidos=[PEDIDOS_CORRECTOS[0], PEDIDOS_CORRECTOS[2]]),
             # Año con dos dígitos en fecha de nacimiento
+    Usuario(dni="65068806N", nombre="Pepe", apellido1="Peces",
+            apellido2="Cuadrado", f_nac="31985-12-11",
+            tarjetas=[TARJETAS_CORRECTAS[0], TARJETAS_CORRECTAS[1]],
+            pedidos=[PEDIDOS_CORRECTOS[0], PEDIDOS_CORRECTOS[2]]),
+            # Año con fecha que incluye más elementos
+    Usuario(dni="65068806N", nombre="Pepe", apellido1="Peces",
+            apellido2="Cuadrado", f_nac="1985-12-110",
+            tarjetas=[TARJETAS_CORRECTAS[0], TARJETAS_CORRECTAS[1]],
+            pedidos=[PEDIDOS_CORRECTOS[0], PEDIDOS_CORRECTOS[2]]),
+            # Año con fecha que incluye más elementos						
 
     Usuario(dni="65068806N", nombre="Pepe", apellido1="Peces",
             apellido2="Cuadrado", f_nac="98-12-11",
