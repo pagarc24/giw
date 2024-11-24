@@ -19,6 +19,7 @@ resultados de los demás.
 ### <DEFINIR AQUÍ LAS CLASES DE MONGOENGINE>
 ###
 
+from datetime import datetime
 from mongoengine import (
     Document, EmbeddedDocument, StringField, IntField, FloatField,
     DateField, ListField, EmbeddedDocumentField, ReferenceField,
@@ -124,6 +125,7 @@ class Pedido(Document):
         productos = [linea.producto for linea in self.lineas if linea.producto and linea.producto.pk]
         if len(productos) != len(set(productos)):
             raise ValidationError("No puede haber líneas con productos duplicados.")
+        
 
 
 class Usuario(Document):
@@ -145,7 +147,14 @@ class Usuario(Document):
         if letras[numero % 23] != letra:
             raise ValidationError("La letra del DNI no es correcta.")
         
-        # Validar tarjetas directamente desde _data para evitar resolución automática
+        # Validación de fecha de nacimiento
+        if isinstance(self.f_nac, str):
+            try:
+                self.f_nac = datetime.strptime(self.f_nac, '%Y-%m-%d')
+            except ValueError:
+                raise ValidationError("La fecha de nacimiento debe tener el formato YYYY-MM-DD.")
+
+        
         tarjetas = self._data.get("tarjetas", None)
         if tarjetas is not None:
             if not isinstance(tarjetas, list):
@@ -154,6 +163,8 @@ class Usuario(Document):
                 if not isinstance(tarjeta, Tarjeta):
                     raise ValidationError("Todos los elementos de tarjetas deben ser instancias de Tarjeta.")
                 if not tarjeta.pk:
-                    raise ValidationError("Todas las tarjetas referenciadas deben estar guardadas en la base de datos.")
-
-
+                    tarjeta.save()  # Guardar tarjeta si no está guardada
+                    if not tarjeta.pk:  # Validar si la tarjeta fue guardada 
+                        raise ValidationError("No se pudo guardar la tarjeta referenciada.")
+        
+        
