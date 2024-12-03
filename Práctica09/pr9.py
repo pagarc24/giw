@@ -17,6 +17,7 @@ resultados de los demás.
 
 from flask import Flask, request, session, render_template
 from mongoengine import connect, Document, StringField, EmailField
+from argon2 import PasswordHasher
 # Resto de importaciones
 
 
@@ -43,11 +44,33 @@ class User(Document):
 # Explicación detallada del mecanismo escogido para el almacenamiento de
 # contraseñas, explicando razonadamente por qué es seguro
 #
-
+ 
+# Utilizamos el algoritmo Argon2, que es un algoritmo de ralentizado (para mayor seguridad),
+# para hacer el hash de la contraseña del usuario. Este algoritmo crea la sal automáticamente 
+# en el proceso de hashing, por lo que no hace falta crear la sal aparte ni guardarla en la base 
+# de datos, lo que hace a este algoritmo más seguro. En nuestra base de datos solo guardamos el 
+# hash resultante para evitar almacenar la contraseña en texto plano.
 
 @app.route('/signup', methods=['POST'])
 def signup():
-    ...
+    nickname = request.form['nickname'] 
+    full_name = request.form['full_name'] 
+    country = request.form['country'] 
+    email = request.form['email'] 
+    password = request.form['password'] 
+    password2 = request.form['password2'] 
+
+    if password != password2: 
+        return "Las contraseñas no coinciden"
+    
+    if User.objects(user_id = nickname): 
+        return "El usuario ya existe" 
+    
+    contraseña_hash = PasswordHasher().hash(password) 
+    usuario = User(user_id=nickname, full_name=full_name, country=country, email=email, passwd=contraseña_hash) 
+    usuario.save() 
+    return f"Bienvenido usuario {full_name}"
+
 
 
 @app.route('/change_password', methods=['POST'])
@@ -57,7 +80,21 @@ def change_password():
            
 @app.route('/login', methods=['POST'])
 def login():
-    ...
+    nickname = request.form['nickname'] 
+    password = request.form['password'] 
+
+    usuario = User.objects(user_id=nickname).first()
+
+    if not usuario: 
+        return "Usuario o contraseña incorrectos" 
+
+    try: 
+        PasswordHasher().verify(usuario.passwd, password) 
+    except Exception: 
+        return "Usuario o contraseña incorrectos"
+    
+    return f"Bienvenido {usuario.full_name}"
+   
     
 
 ##############
