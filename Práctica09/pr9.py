@@ -65,18 +65,32 @@ def signup():
     
     if User.objects(user_id = nickname): 
         return "El usuario ya existe" 
-    
-    contraseña_hash = PasswordHasher().hash(password) 
-    usuario = User(user_id=nickname, full_name=full_name, country=country, email=email, passwd=contraseña_hash) 
-    usuario.save() 
+
+    contraseña_hash = PasswordHasher().hash(password)
+    usuario = User(user_id=nickname, full_name=full_name, country=country, email=email, passwd=contraseña_hash)
+    usuario.save()
     return f"Bienvenido usuario {full_name}"
 
 
 
 @app.route('/change_password', methods=['POST'])
 def change_password():
-    ...
- 
+    nickname = request.form['nickname'] 
+    old_password = request.form['old_password'] 
+    new_password = request.form['new_password']
+
+    usuario = User.objects(user_id=nickname).first()
+    if not usuario: 
+        return "Usuario no encontrado" 
+
+    try: 
+        PasswordHasher().verify(usuario.passwd, old_password) 
+    except Exception: 
+        return "Contraseña incorrecta" 
+
+    usuario.passwd = PasswordHasher().hash(new_password)
+    usuario.save()
+    return "Contraseña cambiada con éxito"
            
 @app.route('/login', methods=['POST'])
 def login():
