@@ -15,9 +15,12 @@ deshonesta ninguna otra actividad que pueda mejorar nuestros resultados ni perju
 resultados de los demás.
 """
 
-from flask import Flask, request, session, render_template
+from flask import Flask, request, session, render_template_string
 from mongoengine import connect, Document, StringField, EmailField
 from argon2 import PasswordHasher
+import pyotp 
+import qrcode 
+import base64
 # Resto de importaciones
 
 
@@ -120,16 +123,83 @@ def login():
 # la URL de registro en Google Authenticator y cómo se genera el código QR
 #
 
+# Generamos un secreto aleatorio en Base32 utilizando  pyotp.random_base32(). 
+# Almacenamos el secreto junto con la información del usuario en la base de datos. 
+# Utilizamos pyotp.utils.build_uri para construir la URL de reegistro a partir del secreto, usuario y emisor. 
+# Y por último generamos el código QR a partir de la URL utilizando la biblioteca qrcode y lo incrustamos en la página HTML.
 
 @app.route('/signup_totp', methods=['POST'])
 def signup_totp():
-    ...
+    nickname = request.form['nickname'] 
+    full_name = request.form['full_name'] 
+    country = request.form['country'] 
+    email = request.form['email'] 
+    password = request.form['password'] 
+    password2 = request.form['password2'] 
+    
+    if password != password2: 
+        return "Las contraseñas no coinciden"
+    
+    if User.objects(user_id = nickname): 
+        return "El usuario ya existe"
+    
+    contraseña_hash = PasswordHasher().hash(password)
+
+    secreto = pyotp.random_base32()
+
+    usuario = User(user_id=nickname, full_name=full_name, country=country, email=email, passwd=contraseña_hash, totp_secret=secreto)
+    usuario.save()
+
+    url = pyotp.utils.build_uri(secreto, nickname)
+
+    qr = qrcode.QRCode(version=1,box_size=10,border=5)
+    qr.add_data(url)
+    qr.make(fit=True)
+    imagen = qr.make_image(fill='black', back_color='white')
+    imagen.save("codigo_qr.png")
+
+    with open("codigo_qr.png", "rb") as file:
+        qr_imagen = base64.b64encode(file.read()).decode()
+
+    html = f"""
+    <html>
+    <head>
+        <title>Registro completado</title>
+    </head>
+    <body>
+        <h1>Registro completado</h1>
+        <p>Nombre de usuario: {full_name}</p>
+        <p>Secreto TOTP: {secreto}</p>
+        <p>Código QR:</p>
+        <img src="data:image/png;base64,{qr_imagen}">
+    </body>
+    </html>
+    """
+    return render_template_string(html)
         
 
 @app.route('/login_totp', methods=['POST'])
 def login_totp():
-    ...
-  
+    nickname = request.form['nickname']
+    password = request.form['password']
+    codigo_totp = request.form['totp']
+
+    usuario = User.objects(user_id=nickname).first()
+    
+    if not usuario:
+        return "Usuario o contraseña incorrectos"
+
+    try:
+        PasswordHasher().verify(usuario.passwd, password)
+    except Exception:
+        return "Usuario o contraseña incorrectos"
+
+    totp = pyotp.TOTP(usuario.totp_secret)
+    if not totp.verify(codigo_totp):
+        return "Usuario o contraseña incorrectos"
+
+    return f"Bienvenido {usuario.full_name}"
+
 
 if __name__ == '__main__':
     # Activa depurador y recarga automáticamente
